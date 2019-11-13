@@ -15,7 +15,7 @@ public class AlgoritmoGenetico1 {
     private final static int INDIVIDUOS = 100;
     private final static int GERACOES = 500;
     private final static int TAXAMUTACAO = 8;
-    private final static int RESTRICOES = 3;
+    private final static double PENALIZACAO = 10;
     private final static double CUSTO[][] = new double[GENES][GENES];
     private final static Random SORTEIA = new Random();
 
@@ -50,20 +50,17 @@ public class AlgoritmoGenetico1 {
 
         private int[] cromossomo;
         private double fitness;
-        //private int[][] caminho;
-        private int[] violacao;
-        private boolean factivel;
+        private int[][] caminho;
+        private double violacao;
 
         private Individuo() {
             this.cromossomo = new int[GENES + 1];
-            //this.caminho = new int[GENES][GENES];
-            this.violacao = new int[RESTRICOES];
-            this.factivel = true;
+            this.caminho = new int[GENES][GENES];
         }
 
         @Override
         public String toString() {
-            return "Rota: " + Arrays.toString(cromossomo) + " | Custo: " + fitness + " | Factivel: " + factivel;
+            return "Rota: " + Arrays.toString(cromossomo) + " | Custo: " + fitness;
         }
 
     }
@@ -115,152 +112,96 @@ public class AlgoritmoGenetico1 {
     private static void avalia(Individuo[] populacao) {
         //defineCaminho(populacao);
 
-        double fitnessMedia = funcaoObjetivo(populacao);
-        double[] violacaoMedia = restricoes(populacao);
+        restricoes(populacao);
+        funcaoObjetivo(populacao);
 
-        penalizacaoAdaptativa(populacao, fitnessMedia, violacaoMedia);
-
+        //penalizacaoAdaptativa(populacao, fitnessMedia, violacaoMedia);
         ordena(populacao);
     }
 
-    /*    private static void defineCaminho(Individuo[] populacao) {
-    for (Individuo individuo : populacao) {
-    for (int i = 1; i < individuo.cromossomo.length; i++) {
-    individuo.caminho[individuo.cromossomo[i - 1]][individuo.cromossomo[i]] += 1;
+    private static void defineCaminho(Individuo[] populacao) {
+        for (Individuo individuo : populacao) {
+            for (int i = 1; i < individuo.cromossomo.length; i++) {
+                individuo.caminho[individuo.cromossomo[i - 1]][individuo.cromossomo[i]] += 1;
+            }
+            individuo.caminho[individuo.cromossomo[individuo.cromossomo.length - 1]][individuo.cromossomo[0]] += 1;
+        }
     }
-    individuo.caminho[individuo.cromossomo[individuo.cromossomo.length - 1]][individuo.cromossomo[0]] += 1;
-    }
-    }*/
-    private static double funcaoObjetivo(Individuo[] populacao) {
-        double fitnessMedia = 0;
 
+    private static void restricoes(Individuo[] populacao) {
+        defineCaminho(populacao);
+
+        for (Individuo individuo : populacao) {
+            for (int i = 0; i < individuo.caminho.length; i++) {
+                int somaLinha = 0;
+                for (int j = 0; j < individuo.caminho[i].length; j++) {
+                    somaLinha += individuo.caminho[i][j];
+                }
+                
+                individuo.violacao += Math.abs(1 - somaLinha);
+            }
+            
+            for (int i = 0; i < individuo.caminho.length; i++) {
+                int somaColuna = 0;
+                for (int j = 0; j < individuo.caminho[i].length; j++) {
+                    somaColuna += individuo.caminho[j][i];
+                }
+                
+                individuo.violacao += Math.abs(1 - somaColuna);
+            }
+        }
+    }
+
+    private static void funcaoObjetivo(Individuo[] populacao) {
         //Calculo de custo de viagem
         for (Individuo individuo : populacao) {
             for (int i = 0; i < individuo.cromossomo.length - 1; i++) {
                 individuo.fitness += CUSTO[individuo.cromossomo[i]][individuo.cromossomo[i + 1]];
             }
-            fitnessMedia += individuo.fitness / populacao.length;
-        }
 
-        return fitnessMedia;
+            individuo.fitness += individuo.violacao * PENALIZACAO;
+        }
     }
 
-    private static double[] restricoes(Individuo[] populacao) {
-        double[] violacaoMedia = new double[populacao[0].violacao.length];
-        for (int i = 0; i < violacaoMedia.length; i++) {
-            violacaoMedia[i] = 0;
-        }
-
-        int a = 0;
-        for (Individuo individuo : populacao) {
-
-            a++;
-            System.out.println(a);
-            boolean[] factivelRestricoes = new boolean[populacao[0].violacao.length];
-            for (int i = 0; i < factivelRestricoes.length; i++) {
-                factivelRestricoes[i] = true;
-            }
-
-            System.out.println(Arrays.toString(individuo.cromossomo));
-            for (int k = 0; k < individuo.violacao.length; k++) {
-                switch (k) {
-                    case 0:
-                        for (int i = 0; i < individuo.cromossomo.length; i++) {
-                            for (int j = i + 1; j < individuo.cromossomo.length; j++) {
-                                if (individuo.cromossomo[i] == individuo.cromossomo[j]) {
-                                    factivelRestricoes[k] = false;
-                                    individuo.violacao[k] += 10;
-                                }
-                            }
-                        }
-                        System.out.println("Primeira restrição: " + factivelRestricoes[k]);
-
-                        break;
-
-                    case 1:
-                        if (individuo.cromossomo[0] != individuo.cromossomo[individuo.cromossomo.length - 1]) {
-                            factivelRestricoes[k] = false;
-                            individuo.violacao[k] += CUSTO[individuo.cromossomo[0]][individuo.cromossomo[individuo.cromossomo.length - 1]];
-                        }
-                        System.out.println("Segunda restrição: " + factivelRestricoes[k]);
-
-                        break;
-
-                    case 2:
-                        for (int i = 1; i < individuo.cromossomo.length - 1; i++) {
-                            if (individuo.cromossomo[i] == individuo.cromossomo[0] || individuo.cromossomo[i] == individuo.cromossomo[individuo.cromossomo.length - 1]) {
-                                factivelRestricoes[k] = false;
-                                individuo.violacao[k] += 10;
-                            }
-                        }
-                        System.out.println("Terceira restrição: " + factivelRestricoes[k]);
-
-                        break;
-                }
-                
-            }System.out.println("");
-
-            for (int i = 0; i < violacaoMedia.length; i++) {
-                violacaoMedia[i] += individuo.violacao[i];
-            }
-
-            //System.out.println(Arrays.toString(violacaoMedia) + "\n");
-            for (boolean factivel : factivelRestricoes) {
-                if (!factivel) {
-                    individuo.factivel = false;
-                    break;
-                }
-            }
-        }
-
-        for (int i = 0; i < violacaoMedia.length; i++) {
-            violacaoMedia[i] /= populacao.length;
-        }
-        //System.out.println(Arrays.toString(violacaoMedia));
-
-        return violacaoMedia;
+    /*    private static void penalizacaoAdaptativa(Individuo[] populacao, double fitnessMedia, double[] violacaoMedia) {
+    for (Individuo individuo : populacao) {
+    if (!individuo.factivel) {
+    //System.out.println("Rota: " + Arrays.toString(individuo.cromossomo));
+    //System.out.println("Violacao: " + Arrays.toString(individuo.violacao));
+    //System.out.println("Fitness: " + individuo.fitness);
+    //System.out.println("Fitness Media: " + fitnessMedia);
+    if (individuo.fitness <= fitnessMedia) {
+    individuo.fitness = fitnessMedia;
     }
-
-    private static void penalizacaoAdaptativa(Individuo[] populacao, double fitnessMedia, double[] violacaoMedia) {
-        for (Individuo individuo : populacao) {
-            if (!individuo.factivel) {
-                //System.out.println("Rota: " + Arrays.toString(individuo.cromossomo));
-                //System.out.println("Violacao: " + Arrays.toString(individuo.violacao));
-                //System.out.println("Fitness: " + individuo.fitness);
-                //System.out.println("Fitness Media: " + fitnessMedia);
-                if (individuo.fitness <= fitnessMedia) {
-                    individuo.fitness = fitnessMedia;
-                }
-
-                double apm = 0;
-                for (int i = 0; i < individuo.violacao.length; i++) {
-                    //System.out.println("Violacao Media: " + violacaoMedia[i]);
-                    double k = Math.abs(fitnessMedia) * individuo.violacao[i] * violacaoMedia[i];
-                    //System.out.println("K: " + k);
-
-                    double div = 0;
-                    for (int j = 0; j < individuo.violacao.length; j++) {
-                        div += Math.pow(violacaoMedia[j], 2);
-                    }
-
-                    //System.out.println("Divisor: " + div);
-                    if (div == 0) {
-                        k = 0;
-                    } else {
-                        k /= div;
-                    }
-
-                    //System.out.println("APM: " + apm);
-                    apm += k;
-                }
-
-                individuo.fitness += apm;
-                //System.out.println("Nova Fitness: " + individuo.fitness + "\n");
-            }
-        }
-        //System.exit(0);
+    
+    double apm = 0;
+    for (int i = 0; i < individuo.violacao.length; i++) {
+    //System.out.println("Violacao Media: " + violacaoMedia[i]);
+    double k = Math.abs(fitnessMedia) * individuo.violacao[i] * violacaoMedia[i];
+    //System.out.println("K: " + k);
+    
+    double div = 0;
+    for (int j = 0; j < individuo.violacao.length; j++) {
+    div += Math.pow(violacaoMedia[j], 2);
     }
-
+    
+    //System.out.println("Divisor: " + div);
+    if (div == 0) {
+    k = 0;
+    } else {
+    k /= div;
+    }
+    
+    //System.out.println("APM: " + apm);
+    apm += k;
+    }
+    
+    individuo.fitness += apm;
+    //System.out.println("Nova Fitness: " + individuo.fitness + "\n");
+    }
+    }
+    //System.exit(0);
+    }*/
     private static void imprime(Individuo[] populacao) {
         for (Individuo individuo : populacao) {
             System.out.println(individuo);
