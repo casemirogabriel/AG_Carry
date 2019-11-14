@@ -22,18 +22,18 @@ public class AlgoritmoGenetico1 {
     private static class Coordenada {
 
         private final static Random SORTEIA = new Random(0);
-        private final static int XMAXIMO = 100;
-        private final static int YMAXIMO = 100;
+        private final static double XMAXIMO = 100;
+        private final static double YMAXIMO = 100;
 
         private int ponto; //Chave
-        private int x;
-        private int y;
+        private double x;
+        private double y;
 
         private Coordenada() {
 
         }
 
-        private Coordenada(int ponto, int x, int y) {
+        private Coordenada(int ponto, double x, double y) {
             this.ponto = ponto;
             this.x = x;
             this.y = y;
@@ -70,7 +70,7 @@ public class AlgoritmoGenetico1 {
 
         for (int i = 0; i < coordenadas.length; i++) {
             //Armazenar coordenadas em um CVS
-            coordenadas[i] = new Coordenada(i, Coordenada.SORTEIA.nextInt(Coordenada.XMAXIMO), Coordenada.SORTEIA.nextInt(Coordenada.YMAXIMO));
+            coordenadas[i] = new Coordenada(i, Coordenada.SORTEIA.nextDouble() * Coordenada.XMAXIMO, Coordenada.SORTEIA.nextDouble() * Coordenada.YMAXIMO);
         }
 
         for (int i = 0; i < CUSTO.length; i++) {
@@ -137,16 +137,16 @@ public class AlgoritmoGenetico1 {
                 for (int j = 0; j < individuo.caminho[i].length; j++) {
                     somaLinha += individuo.caminho[i][j];
                 }
-                
+
                 individuo.violacao += Math.abs(1 - somaLinha);
             }
-            
+
             for (int i = 0; i < individuo.caminho.length; i++) {
                 int somaColuna = 0;
                 for (int j = 0; j < individuo.caminho[i].length; j++) {
                     somaColuna += individuo.caminho[j][i];
                 }
-                
+
                 individuo.violacao += Math.abs(1 - somaColuna);
             }
         }
