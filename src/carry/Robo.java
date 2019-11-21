@@ -11,79 +11,81 @@ package carry;
  */
 public class Robo {
 
-    private final double l;
-    private final double r;
-    private double o;
-    private double wLeft;
-    private double wRight;
-    private double v;
-    private double w;
+    private final double raioRobo;
+    private final double raioRoda;
+    private double orientacao;
+    private double angularLeft;
+    private double angularRight;
+    private double linear;
+    private double angular;
     private Posicao posicao;
 
-    public Robo(double l, double r) {
-        this.l = l;
-        this.r = r;
+    public Robo(double raioRobo, double raioRoda) {
+        this.raioRobo = raioRobo;
+        this.raioRoda = raioRoda;
     }
 
-    public double getL() {
-        return l;
+    public double getRaioRobo() {
+        return raioRobo;
     }
 
-    public double getR() {
-        return r;
+    public double getRaioRoda() {
+        return raioRoda;
     }
 
-    public double getO() {
-        return o;
+    public double getOrientacao() {
+        return orientacao;
     }
 
-    public void setO(double o) {
-        this.o = o;
+    public void setOrientacao() {
+        this.orientacao = 0; //obter orientação do robô pela visão computacional
     }
 
-    public double getwLeft() {
-        return wLeft;
+    public double getAngularLeft() {
+        return angularLeft;
     }
 
-    public void setwLeft(double wLeft) {
-        this.wLeft = wLeft;
+    public void setAngularLeft(double angularLeft) {
+        this.angularLeft = angularLeft;
     }
 
-    public double getwRight() {
-        return wRight;
+    public double getAngularRight() {
+        return angularRight;
     }
 
-    public void setwRight(double wRight) {
-        this.wRight = wRight;
+    public void setAngularRight(double angularRight) {
+        this.angularRight = angularRight;
     }
 
-    public double getV() {
-        return v;
+    public double getLinear() {
+        return linear;
     }
 
-    public void setV() {
-        this.v = this.r * (this.wLeft + this.wRight) / 2;
+    public void setLinear() {
+        this.linear = this.raioRoda * (this.angularLeft + this.angularRight) / 2;
     }
 
-    public double getW() {
-        return w;
+    public double getAngular() {
+        return angular;
     }
 
-    public void setW() {
-        this.w = this.r * (this.wRight - this.wLeft) / (2 * this.l);
+    public void setAngular() {
+        this.angular = this.raioRoda * (this.angularRight - this.angularLeft) / (2 * this.raioRobo);
     }
 
     public Posicao getPosicao() {
         return posicao;
     }
 
-    public void setPosicao(Posicao posicao) {
-        this.posicao = posicao;
+    public void setPosicao() {
+        this.posicao = new Posicao(0, 0); //obter posição do robô pela visão computacional
     }
 
     public void atualiza() {
-        setV();
-        setW();
+        setOrientacao();
+        setPosicao();
+        setLinear();
+        setAngular();
     }
 
     public void controlador(Posicao objetivo, double orientacao) {
@@ -91,10 +93,32 @@ public class Robo {
         double dy = objetivo.getY() - posicao.getY();
         double p = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
 
-        while (p > 0 || Math.abs(o - orientacao) > 0) {
+        while (p > 0 || Math.abs(orientacao - this.orientacao) > 0) {
+            dx = objetivo.getX() - posicao.getX();
+            dy = objetivo.getY() - posicao.getY();
+            p = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+
             double gama = Math.atan(dy / dx);
-            double alpha = gama - o;
+            double alpha = gama - this.orientacao;
             double beta = orientacao - gama;
+
+            if (alpha < Math.PI / 2 * -1 || alpha > Math.PI / 2) {
+                p *= -1;
+                alpha += Math.PI;
+                beta += Math.PI;
+
+                alpha %= 2 * Math.PI;
+                if (alpha > Math.PI) {
+                    alpha -= 2 * Math.PI;
+                }
+
+                beta %= 2 * Math.PI;
+                if (beta > Math.PI) {
+                    beta -= 2 * Math.PI;
+                }
+            }
+
+            atualiza();
         }
     }
 }
