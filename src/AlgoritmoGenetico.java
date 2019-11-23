@@ -48,7 +48,7 @@ public class AlgoritmoGenetico {
     private static class Individuo {
 
         private int[] cromossomo;
-        private int fitness;
+        private double fitness;
 
         private Individuo() {
             this.cromossomo = new int[GENES];
@@ -168,7 +168,7 @@ public class AlgoritmoGenetico {
     }
 
     private static Individuo[] selecao(Individuo[] populacao) {
-        int[] fitness = new int[populacao.length];
+        double[] fitness = new double[populacao.length];
         int somaFitness = 0;
         //System.out.println("Antes");
         for (int i = 0; i < populacao.length; i++) {
@@ -198,8 +198,8 @@ public class AlgoritmoGenetico {
         //System.out.println(fitness[0]+"  "+fitness[1]+"  "+fitness[2]);
         //System.exit(0);
 
-        int[][] intervalo = new int[populacao.length][2];
-        int maximo = 0;
+        double[][] intervalo = new double[populacao.length][2];
+        double maximo = 0;
         //System.out.println(intervalo.length);
         //System.exit(0);
         for (int i = 0; i < intervalo.length; i++) {
@@ -235,8 +235,8 @@ public class AlgoritmoGenetico {
         return reprodutores;
     }
 
-    private static Individuo roleta(Individuo[] populacao, int[][] intervalo, int maximo) {
-        double escolhido = sorteiaIntervalo(0, maximo);
+    private static Individuo roleta(Individuo[] populacao, double[][] intervalo, double maximo) {
+        double escolhido = SORTEIA.nextDouble() * maximo;
         //System.out.println("Escolhido: "+escolhido);
         //System.exit(0);
         for (int i = 0; i < populacao.length; i++) {
