@@ -9,11 +9,11 @@ import java.util.*;
  */
 public class AlgoritmoGenetico {
 
-    private final static int GENES = 6;
+    private final static int GENES = 8;
     private final static int LIMITEMINIMO = 0;
-    private final static int LIMITEMAXIMO = GENES - 1;
-    private final static int INDIVIDUOS = 100;
-    private final static int GERACOES = 50;
+    private final static int LIMITEMAXIMO = GENES;
+    private final static int INDIVIDUOS = 500;
+    private final static int GERACOES = 500;
     private final static int TAXAMUTACAO = 8;
     private final static double CUSTO[][] = new double[GENES][GENES];
     private final static Random SORTEIA = new Random();
@@ -21,18 +21,18 @@ public class AlgoritmoGenetico {
     private static class Coordenada {
 
         private final static Random SORTEIA = new Random(0);
-        private final static int XMAXIMO = 100;
-        private final static int YMAXIMO = 100;
+        private final static double XMAXIMO = 50;
+        private final static double YMAXIMO = 50;
 
         private int ponto; //Chave
-        private int x;
-        private int y;
+        private double x;
+        private double y;
 
         private Coordenada() {
 
         }
 
-        private Coordenada(int ponto, int x, int y) {
+        private Coordenada(int ponto, double x, double y) {
             this.ponto = ponto;
             this.x = x;
             this.y = y;
@@ -40,7 +40,7 @@ public class AlgoritmoGenetico {
 
         @Override
         public String toString() {
-            return ponto + "(" + x + ", " + y + ")";
+            return ponto + " (" + x + ", " + y + ")";
         }
 
     }
@@ -51,12 +51,12 @@ public class AlgoritmoGenetico {
         private double fitness;
 
         private Individuo() {
-            this.cromossomo = new int[GENES];
+            this.cromossomo = new int[GENES + 1];
         }
 
         @Override
         public String toString() {
-            return "Rota: " + Arrays.toString(cromossomo) + " | Custo: " + fitness;
+            return "Roteiro: " + Arrays.toString(cromossomo) + " | Custo: " + fitness;
         }
 
     }
@@ -67,7 +67,7 @@ public class AlgoritmoGenetico {
 
         for (int i = 0; i < coordenadas.length; i++) {
             //Armazenar coordenadas em um BD
-            coordenadas[i] = new Coordenada(i + 1, Coordenada.SORTEIA.nextInt(Coordenada.XMAXIMO), Coordenada.SORTEIA.nextInt(Coordenada.YMAXIMO));
+            coordenadas[i] = new Coordenada(i, Coordenada.SORTEIA.nextDouble() * Coordenada.XMAXIMO, Coordenada.SORTEIA.nextDouble() * Coordenada.YMAXIMO);
         }
 
         for (int i = 0; i < CUSTO.length; i++) {
@@ -76,6 +76,11 @@ public class AlgoritmoGenetico {
                 CUSTO[i][j] = Math.sqrt(Math.pow(coordenadas[i].x - coordenadas[j].x, 2) + Math.pow(coordenadas[i].y - coordenadas[j].y, 2));
             }
         }
+
+        for (Coordenada coordenada : coordenadas) {
+            System.out.println(coordenada);
+        }
+        System.out.println("");
 
         for (int i = 0; i < CUSTO.length; i++) {
             for (int j = 0; j < CUSTO[i].length; j++) {
@@ -90,20 +95,16 @@ public class AlgoritmoGenetico {
 
         for (int i = 0; i < populacaoInicial.length; i++) {
             populacaoInicial[i] = new Individuo();
-            populacaoInicial[i].cromossomo = geraCromossomo();
+            geraCromossomo(populacaoInicial[i].cromossomo);
         }
 
         return populacaoInicial;
     }
 
-    private static int[] geraCromossomo() {
-        int[] cromossomo = new int[GENES];
-
+    private static void geraCromossomo(int[] cromossomo) {
         for (int i = 0; i < cromossomo.length; i++) {
             cromossomo[i] = sorteiaIntervalo(LIMITEMINIMO, LIMITEMAXIMO);
         }
-
-        return cromossomo;
     }
 
     private static int sorteiaIntervalo(int minimo, int maximo) {
@@ -114,7 +115,7 @@ public class AlgoritmoGenetico {
         for (Individuo individuo : populacao) {
             individuo.fitness = funcaoObjetivo(individuo.cromossomo);
         }
-        
+
         ordena(populacao);
     }
 
@@ -137,9 +138,9 @@ public class AlgoritmoGenetico {
         }
     }
 
-    private static int funcaoObjetivo(int[] cromossomo) {
-        int funcaoAptidao = 0;
-        int violacao = 0;
+    private static double funcaoObjetivo(int[] cromossomo) {
+        double funcaoAptidao = 0;
+        double violacao = 0;
 
         //Restricao: nao repetir cidade
         for (int i = 1; i < cromossomo.length - 1; i++) {
@@ -162,12 +163,12 @@ public class AlgoritmoGenetico {
         for (int i = 0; i < cromossomo.length - 1; i++) {
             funcaoAptidao += CUSTO[cromossomo[i]][cromossomo[i + 1]];
         }
-        
+
         int penalizacao = 10;
         return funcaoAptidao + penalizacao * violacao;
     }
 
-    private static Individuo[] selecao(Individuo[] populacao) {
+    private static Individuo[][] selecao(Individuo[] populacao) {
         double[] fitness = new double[populacao.length];
         int somaFitness = 0;
         //System.out.println("Antes");
@@ -218,15 +219,14 @@ public class AlgoritmoGenetico {
         }
         //System.out.println(maximo);
         //System.exit(0);
-        Individuo[] reprodutores = new Individuo[populacao.length];
+        Individuo[][] reprodutores = new Individuo[populacao.length / 2][2];
         //System.out.println(reprodutores.length);
         //System.exit(0);
-        for (int i = 1; i < reprodutores.length; i += 2) {
-            reprodutores[i] = roleta(populacao, intervalo, maximo);
-            reprodutores[i - 1] = roleta(populacao, intervalo, maximo);
-
-            while (Objects.equals(reprodutores[i], reprodutores[i - 1])) {
-                reprodutores[i - 1] = roleta(populacao, intervalo, maximo);
+        for (Individuo[] reprodutor : reprodutores) {
+            reprodutor[0] = roleta(populacao, intervalo, maximo);
+            reprodutor[1] = roleta(populacao, intervalo, maximo);
+            while (Objects.equals(reprodutor[0], reprodutor[1])) {
+                reprodutor[1] = roleta(populacao, intervalo, maximo);
             }
         }
         //for (int i = 0; i < reprodutores.length; i ++) 
@@ -250,24 +250,24 @@ public class AlgoritmoGenetico {
         return populacao[0];
     }
 
-    private static Individuo[] cruzamento(Individuo[] reprodutores, Individuo[] populacaoFinal) {
+    private static Individuo[] cruzamento(Individuo[][] reprodutores, Individuo[] populacaoFinal) {
 
         //Individuo[] populacaoFinal = new Individuo[INDIVIDUOS];
         //int gerados = populacaoFinal.length * TAXACRUZAMENTO / 100;
         //System.out.println("Gerados = "+gerados);        
         //System.exit(0);
-        for (int i = 3; i < populacaoFinal.length; i += 2) {
+        for (int i = 3, j = 0; i < populacaoFinal.length; i += 2, j++) {
             //System.out.println(indicePais[i][0]);        
             //System.out.println(indicePais[i][1]);        
             //System.out.println("");
 
-            int pontoCorte = sorteiaPonto();
+            int pontoDeCorte = sorteiaPonto();
 
             populacaoFinal[i] = new Individuo();
-            populacaoFinal[i].cromossomo = crossover(reprodutores, i, 0, pontoCorte);
+            populacaoFinal[i].cromossomo = crossover(reprodutores[j], 0, pontoDeCorte);
 
             populacaoFinal[i - 1] = new Individuo();
-            populacaoFinal[i - 1].cromossomo = crossover(reprodutores, i, 1, pontoCorte);
+            populacaoFinal[i - 1].cromossomo = crossover(reprodutores[j], 1, pontoDeCorte);
         }
 
         /*for (int i = gerados; i < populacaoFinal.length; i++) {
@@ -282,34 +282,34 @@ public class AlgoritmoGenetico {
         return populacaoFinal;
     }
 
-    private static int[] crossover(Individuo[] reprodutores, int i, int troca, int pontoCorte) {
-        int[] cromossomo1 = reprodutores[i].cromossomo;
-        int[] cromossomo2 = reprodutores[i - 1].cromossomo;
+    private static int[] crossover(Individuo[] reprodutores, int troca, int pontoDeCorte) {
+        int[] cromossomo1 = reprodutores[0].cromossomo;
+        int[] cromossomo2 = reprodutores[1].cromossomo;
         //for (int j = 0; j < cromossomo1.length; j++)
         //System.out.println(cromossomo1[j]);
         //System.out.println("");
         //for (int j = 0; j < cromossomo2.length; j++)
         //System.out.println(cromossomo2[j]);
 
-        int resto = GENES - pontoCorte;
+        int resto = reprodutores[0].cromossomo.length - pontoDeCorte;
         //System.out.println(resto);
         //System.out.println(pontoDeCorte);
 
-        int[][] parte1 = new int[2][pontoCorte];
+        int[][] parte1 = new int[2][pontoDeCorte];
         int[][] parte2 = new int[2][resto];
 
-        cortaCromossomo(cromossomo1, parte1[0], parte2[0], pontoCorte, resto);
-        cortaCromossomo(cromossomo2, parte1[1], parte2[1], pontoCorte, resto);
+        cortaCromossomo(cromossomo1, parte1[0], parte2[0], pontoDeCorte, resto);
+        cortaCromossomo(cromossomo2, parte1[1], parte2[1], pontoDeCorte, resto);
 
-        int[] cromossomoFilho = new int[GENES];
+        int[] cromossomoFilho = new int[reprodutores[0].cromossomo.length];
 
         switch (troca) {
             case 0:
-                trocaGenes(cromossomoFilho, parte1[0], parte2[1], pontoCorte, resto);
+                trocaGenes(cromossomoFilho, parte1[0], parte2[1], pontoDeCorte, resto);
                 break;
 
             case 1:
-                trocaGenes(cromossomoFilho, parte1[1], parte2[0], pontoCorte, resto);
+                trocaGenes(cromossomoFilho, parte1[1], parte2[0], pontoDeCorte, resto);
                 break;
         }
         //for (int j = 0; j < cromossomo1.length; j++)
@@ -324,23 +324,19 @@ public class AlgoritmoGenetico {
     private static void trocaGenes(int[] cromossomoFilho, int[] parte1, int[] parte2, int pontoDeCorte, int resto) {
         System.arraycopy(parte1, 0, cromossomoFilho, 0, pontoDeCorte);
 
-        for (int i = 0, j = pontoDeCorte; i < resto && j < GENES; i++, j++) {
+        for (int i = 0, j = pontoDeCorte; i < resto && j < cromossomoFilho.length; i++, j++) {
             cromossomoFilho[j] = parte2[i];
         }
     }
 
     private static int sorteiaPonto() {
-        if ((GENES - 1) - 1 == 0) {
-            return 1;
-        } else {
-            return SORTEIA.nextInt((GENES - 1) - 1) + 1;
-        }
+        return sorteiaIntervalo(1, GENES - 1);
     }
 
     private static void cortaCromossomo(int[] cromossomo, int[] parte1, int[] parte2, int pontoDeCorte, int resto) {
         System.arraycopy(cromossomo, 0, parte1, 0, pontoDeCorte);
 
-        for (int i = 0, j = pontoDeCorte; i < resto && j < GENES; i++, j++) {
+        for (int i = 0, j = pontoDeCorte; i < resto && j < cromossomo.length; i++, j++) {
             parte2[i] = cromossomo[j];
         }
     }
@@ -421,7 +417,7 @@ public class AlgoritmoGenetico {
             //System.out.println(populacaoInicial[GERACOES]);
             geracoes--;
         }
-        imprime(populacaoInicial);
+        //imprime(populacaoInicial);
         System.out.println(populacaoInicial[0]);
     }
 }
