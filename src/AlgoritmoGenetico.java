@@ -1,5 +1,6 @@
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Random;
 
 /**
  * Classe responsavel pela execucao de um AG auxiliar na resolucao do PCV
@@ -24,7 +25,7 @@ public class AlgoritmoGenetico {
         private final static double XMAXIMO = 50;
         private final static double YMAXIMO = 50;
 
-        private int ponto; //Chave
+        private int chave;
         private double x;
         private double y;
 
@@ -32,15 +33,15 @@ public class AlgoritmoGenetico {
 
         }
 
-        private Coordenada(int ponto, double x, double y) {
-            this.ponto = ponto;
+        private Coordenada(int chave, double x, double y) {
+            this.chave = chave;
             this.x = x;
             this.y = y;
         }
 
         @Override
         public String toString() {
-            return ponto + " (" + x + ", " + y + ")";
+            return chave + " (" + x + ", " + y + ")";
         }
 
     }
@@ -225,7 +226,7 @@ public class AlgoritmoGenetico {
         for (Individuo[] reprodutor : reprodutores) {
             reprodutor[0] = roleta(populacao, intervalo, maximo);
             reprodutor[1] = roleta(populacao, intervalo, maximo);
-            while (Objects.equals(reprodutor[0], reprodutor[1])) {
+            while (reprodutor[0].equals(reprodutor[1])) {
                 reprodutor[1] = roleta(populacao, intervalo, maximo);
             }
         }
