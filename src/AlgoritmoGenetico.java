@@ -86,7 +86,7 @@ public class AlgoritmoGenetico {
         for (int i = 0; i < CUSTO.length; i++) {
             for (int j = 0; j < CUSTO[i].length; j++) {
                 if (i != j) {
-                    System.out.println("C(" + i + ", " + j + ") = " + CUSTO[i][j]);
+                    System.out.println("Distância " + i + "-" + j + " = " + CUSTO[i][j]);
                 }
             }
             System.out.println("");
