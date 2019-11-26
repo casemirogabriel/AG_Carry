@@ -57,7 +57,7 @@ public class AlgoritmoGenetico {
 
         @Override
         public String toString() {
-            return "Roteiro: " + Arrays.toString(cromossomo) + " | Custo: " + fitness;
+            return Arrays.toString(cromossomo) + " | Custo: " + fitness;
         }
 
     }
@@ -85,7 +85,9 @@ public class AlgoritmoGenetico {
 
         for (int i = 0; i < CUSTO.length; i++) {
             for (int j = 0; j < CUSTO[i].length; j++) {
-                System.out.println("C(" + i + ", " + j + ") = " + CUSTO[i][j]);
+                if (i != j) {
+                    System.out.println("C(" + i + ", " + j + ") = " + CUSTO[i][j]);
+                }
             }
             System.out.println("");
         }
@@ -419,6 +421,6 @@ public class AlgoritmoGenetico {
             geracoes--;
         }
         //imprime(populacaoInicial);
-        System.out.println(populacaoInicial[0]);
+        System.out.println("Melhor roteiro encontrado: " + populacaoInicial[0]);
     }
 }
